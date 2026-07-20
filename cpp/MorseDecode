@@ -1,9 +1,17 @@
 /******************************************************************************
 
                               Morse Code decipherer (W.I.P.)
-                              Made in C++
+                              Made in C++ by Pro2021CA
 
 *******************************************************************************/
+
+/*
+Start by placing the desired morse code inside str variable.
+the morse must be in the format using - and . for the characters and / for spaces.
+Now you can compile and run the code.
+
+Later I might add input for the desired morse rather than using a constant.
+*/
 
 #include <iostream>
 #include <bits/stdc++.h>
