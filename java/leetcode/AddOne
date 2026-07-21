@@ -1,5 +1,6 @@
 /*
 given an array of digits of a large number, add one to the number and return the new array.
+this allows you to manipulate large numbers that would normally be too big for java.
 */
 
 class Solution {
