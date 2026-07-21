@@ -1,0 +1,68 @@
+# function for randomly generating walls for a backrooms like maze.
+# usage: loadchuncks(bottomchunck, topchunck)
+
+
+function spawnwalls(p: location, radius: int):
+    loop {_radius} times:
+        loop 4 times:
+            set {_loc} to {_p}
+            set y-coord of {_loc} to -63
+            set {_spot} to random integer between -4 and 4
+            if loop-iteration-2 is 1:
+                add 8*loop-value-1 to x coord of {_loc}
+                set {_latest} to {_loc}
+                set {_hole1} to {_loc}
+                set {_hole2} to {_loc}
+                remove {_spot} from z coord of {_hole1}
+                remove {_spot} + 1 from z coord of {_hole2}
+                remove 8 from z coord of {_latest}
+                add 8 to z coord of {_loc}
+            else if loop-iteration-2 is 2:
+                add 8*loop-value-1 to z coord of {_loc}
+                set {_latest} to {_loc}
+                set {_hole1} to {_loc}
+                set {_hole2} to {_loc}
+                remove {_spot} from x coord of {_hole1}
+                remove {_spot} + 1 from x coord of {_hole2}
+                add 8 to x coord of {_latest}
+                remove 8 from x coord of {_loc}
+            else if loop-iteration-2 is 3:
+                remove 8*loop-value-1 from x coord of {_loc}
+                set {_latest} to {_loc}
+                set {_hole1} to {_loc}
+                set {_hole2} to {_loc}
+                remove {_spot} from z coord of {_hole1}
+                remove {_spot} + 1 from z coord of {_hole2}
+                add 8 to z coord of {_latest}
+                remove 8 from z coord of {_loc}
+            else:
+                remove 8*loop-value-1 from z coord of {_loc}
+                set {_latest} to {_loc}
+                set {_hole1} to {_loc}
+                set {_hole2} to {_loc}
+                remove {_spot} from x coord of {_hole1}
+                remove {_spot} + 1 from x coord of {_hole2}
+                remove 8 from x coord of {_latest}
+                add 8 to x coord of {_loc}
+            add 5 to y coord of {_loc}
+            add 1 to y coord of {_hole1}
+            add 4 to y coord of {_hole2}
+            chance of 90%:
+                set blocks within {_latest} and {_loc} to sandstone
+                set blocks within {_hole1} and {_hole2} to air
+                set {_l} to {_p}'s location
+                set y coord of {_l} to y coord of {_loc}
+                chance of 50%:
+                    set random element out of blocks within {_l} and {_loc} to sea lantern
+                        
+
+function loadchunks(start: int, size: int):
+    loop integers from {_start} to {_size}:
+        loop integers from {_start} to {_size}:
+            set {_s1} to random integer between 1 and 16
+            set {_s2} to random integer between 1 and 16
+            set {_chunk} to chunk at coords loop-value-1,loop-value-2 in world "world"
+            spawnwalls((location of block at {_s1},1,{_s2} in {_chunk}), 1)
+            broadcast "generating chunk %loop-value-1%, %loop-value-2%"
+            wait 1 tick
+    broadcast "finished loading!"
