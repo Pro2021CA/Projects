@@ -1,0 +1,89 @@
+import:
+    java.io.File
+    java.io.PrintWriter
+
+
+
+function registerEnchant(name: string, maxlevel: int, support: string, weight: int):
+    set {enchants::%{_name}%::max} to {_maxlevel}
+    set {enchants::%{_name}%::supported} to {_support}
+    set {enchants::%{_name}%::weight} to {_weight} 
+
+on load:
+    clear {enchants::*}
+    registerEnchant("Excavate", 1, "#minecraft:pickaxes", 10)
+    registerEnchant("Unbreakable", 1, "#minecraft:pickaxes", 100)
+    registerEnchant("Speed_Boots", 5, "#minecraft:boots", 10)
+    set {-unbreakable::*} to barrier, command block, bedrock, chain command block, repeating command block, structure void, light, air
+    if new File("world/datapacks/3x3/pack.mcmeta").exists() is true:
+        if {restarted} isn't set:
+            set {restarted} to true
+            stop
+        clear {restarted}
+        set {_s} to ""
+        loop indices of {enchants::*}:
+            if loop-iteration isn't size of {enchants::*}:
+                set {_s} to "%{_s}%""custom_enchant:%loop-value%"","
+            else:
+                set {_s} to "%{_s}%""custom_enchant:%loop-value%"""
+        createFile("world/datapacks/3x3/data/minecraft/tags/enchantment/non_treasure.json", "{""replace"": false,    ""values"": [    %{_s}%]}")
+        createFile("world/datapacks/3x3/data/minecraft/tags/enchantment/in_enchanting_table.json", "{""replace"": false,    ""values"": [    %{_s}%]}")
+
+
+    createFile("world/datapacks/3x3/pack.mcmeta", "{""pack"": {""pack_format"": 91,""description"": ""§dCustom Enchantments"",""min_format"": 91,""max_format"": 91}}")
+    
+    loop indices of {enchants::*}:
+        createFile("world/datapacks/3x3/data/custom_enchant/enchantment/%loop-value%.json", "{  ""description"": ""%loop-value%"",  ""supported_items"": ""%{enchants::%loop-value%::supported}%"",  ""primary_items"": ""%{enchants::%loop-value%::supported}%"",  ""weight"": %{enchants::%loop-value%::weight}%,  ""max_level"": %{enchants::%loop-value%::max}%,  ""min_cost"": {    ""base"": 1,    ""per_level_above_first"": 0  },  ""max_cost"": {    ""base"": 50,    ""per_level_above_first"": 0  },  ""anvil_cost"": 2,  ""slots"": [    ""mainhand""  ]}")
+    wait 1 second
+    execute console command "datapack list"
+    wait 1 second
+    execute console command "datapack enable ""file/3x3"""
+
+function createFile(str: string, text: string):
+    set {_s::*} to {_str} split at "/"
+    set {_m} to {_s::1}
+    loop {_s::*}:
+        if loop-iteration isn't 1:
+            set {_m} to "%{_m}%/%loop-value%"
+        if new File({_m}).exists() is false:
+            if {_m} contains ".":
+                set {_writer} to new PrintWriter({_m})
+                replace all "," with ",%nl%" in {_text}
+                replace all "{" with "{%nl%" in {_text}
+                replace all "}" with "%nl%}" in {_text}
+                replace all "[" with "[%nl%" in {_text}
+                replace all "]" with "%nl%]" in {_text}
+                {_writer}.write({_text})
+                {_writer}.close()
+                stop
+            new File({_m}).mkdir()
+
+
+
+on mine:
+    if player's tool is enchanted with custom enchant "Excavate":
+        set {_x} to location of event-block
+        add 1 to y-coord of {_x}
+        add 1 to z-coord of {_x}
+        add 1 to x-coord of {_x}
+        set {_z} to location of event-block
+        remove 1 from y-coord of {_z}
+        remove 1 from z-coord of {_z}
+        remove 1 from x-coord of {_z}
+        damage player's tool by size of (blocks within {_z} and {_x} where [{-unbreakable::*} doesn't contain type of input])
+        break (blocks within {_z} and {_x} where [{-unbreakable::*} doesn't contain type of input]) with effects and with xp using player's tool
+        if durability of player's tool is 0:
+            set player's tool to air
+            play sound "minecraft:entity.item.break" to player
+    if player's tool is enchanted with custom enchant "unbreakable":
+        set durability of player's tool to max durability of player's tool
+
+
+
+
+condition %item% is enchanted with custom enchant[ment] %string%:
+    check:
+        if "%compound tag "minecraft:enchantments" of nbt compound of expr-1%" contains "custom_enchant:%expr-2%":
+            continue
+        else:
+            exit
