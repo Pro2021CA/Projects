@@ -1,0 +1,77 @@
+options:
+    prefix: [BlazedGens]
+
+command blockrespawner <string> <string> [<timespan>]:
+    permission: op
+    trigger:
+        if arg-1 is "create":
+            if arg-3 isn't set:
+                send "{@prefix} Please specify a timespan!"
+                stop
+            set {mines::%arg-2%::time} to arg-3
+            send "{@prefix} Started a new cycle named %arg-2%"
+            startMine(arg-2)
+        else if arg-1 is "mark":
+            set {mines::%arg-2%::blocks::%player's targeted block's location%} to type of player's targeted block
+            set {mines::%arg-2%::locations::%player's targeted block's location%} to player's targeted block's location
+            send "{@prefix} Added target block to %arg-2%"
+        else if arg-1 is "delete":
+            clear {mines::%arg-2%::blocks::*}
+            clear {mines::%arg-2%::locations::*}
+            clear {-active::%{_mine}%}
+            clear {mines::%arg-2%::time}
+            clear {mines::%arg-2%}
+            clear {mines::%arg-2%::latest}
+            send "{@prefix} Deleted %arg-2%"
+        else if arg-1 is "force":
+            loop indices of {mines::%arg-2%::blocks::*}:
+                set {_loc} to {mines::%arg-2%::locations::%loop-value%}
+                set block at {_loc} to {mines::%arg-2%::blocks::%loop-value%}
+                if {mine::message} is set:
+                    broadcast formatted replaceValue({mine::message}, arg-2)
+                set {mines::%arg-2%::latest} to now
+                send "{@prefix} force rest %arg-2%"
+        else if arg-1 is "list":
+            send "&c----Blocks-----"
+            loop indices of {mines::%arg-2%::blocks::*}:
+                send "&7%loop-iteration%. %{mines::%arg-2%::blocks::%loop-value%}% | %{mines::%arg-2%::locations::%loop-value%}%"
+            send "&c---------------"
+        else if arg-1 is "time":
+            send "{@prefix} Time until reset: %{mines::%arg-2%::time} - difference between {mines::%arg-2%::latest} and now%"
+        else if arg-1 is "message":
+            set {mine::message} to arg-2
+            send "{@prefix} Message has been set!"
+        else:
+            send "{@prefix} unknown command!"
+        
+on load:
+    loop indices of {mines::*}:
+        if {-active::%loop-value%} isn't set:
+            startMine(loop-value)
+
+
+function startMine(mine: string):
+    set {-active::%{_mine}%} to true
+    while {mines::%{_mine}%::time} is set:
+        loop indices of {mines::%{_mine}%::blocks::*}:
+            set {_loc} to {mines::%{_mine}%::locations::%loop-value%}
+            set block at {_loc} to {mines::%{_mine}%::blocks::%loop-value%}
+        if {mine::message} is set:
+            broadcast formatted replaceValue({mine::message}, {_mine})
+        set {mines::%{_mine}%::latest} to now
+        wait {mines::%{_mine}%::time}
+
+
+function replaceValue(message: string, value: string):: string:
+    replace all "%%cycle%%" with {_value} in {_message}
+    return {_message}
+
+
+on tab complete of "/blockrespawner":
+    set tab completions for position 1 to "list", "mark", "force", "time", "delete", "create", "message"
+    set tab completions for position 2 to indices of {mines::*}
+    if tab arg-1 is "message":
+        set tab completions for position 2 to {mine::message}
+    if tab arg-1 is "create":
+        set tab completions for position 2 to "<name>"
+        set tab completions for position 3 to "<time>"
