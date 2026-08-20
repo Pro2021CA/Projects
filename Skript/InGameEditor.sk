@@ -1,3 +1,9 @@
+###
+In game skript editor using books
+Made by Pro2021CA
+###
+
+
 import:
     java.io.File
     java.util.Scanner
@@ -8,26 +14,19 @@ command getskript <string>:
     trigger:
         set {_skript} to new File("plugins/Skript/scripts/%arg-1%")
         set {_scanner} to new Scanner({_skript})
-        set {_b} to written book
+        set {_b} to writable book
+        set {_bookmeta} to {_b}.getItem().getItemMeta()
         set {_text} to ""
         while {_scanner}.hasNextLine():
             set {_text} to "%{_text}%%nl%%{_scanner}.nextLine()%"
             if mod(loop-iteration, 5) is 0:
-                set page (loop-iteration / 5) of {_b} to {_text}
+                {_bookmeta}.addPage({_text})
                 set {_text} to ""
-                wait 1 tick
-                
-        # try to give a writable book rather than a written one (WIP)                
-        #set {_text::*} to compound list tag "pages" of compound tag "minecraft:written_book_content" of nbt compound of {_b}
-        #set {_s} to writable book
-        #set compound list tag "pages" of compound tag "minecraft:writable_book_content" of nbt compound of {_s} to {_text::*}
-        #loop {_text::*}:
-        #    set {_test} to loop-value
-        #    regex replace "{extra:\[".*"\],.*:""""}" with ".*" in {_test}
-        #    broadcast {_test}
+        {_bookmeta}.addPage({_text})
+        {_b}.getItem().setItemMeta({_bookmeta})
 
 
-        
+        send "&aYou got a book with the contents of %arg-1%"
         give player {_b}
 
 on tab complete of "/getskript":
@@ -36,9 +35,24 @@ on tab complete of "/getskript":
         regex replace "[\[\]]" with "" in {_name}
         replace all "plugins\Skript\scripts\" with "" in {_name}
         regex replace "^ *" with "" in {_name}
-        if {_name} matches "^[-].*":
+        if any:
+            {_name} matches "^[-].*"
+            {_name} doesn't match ".*\.sk$"
+        then:
             continue
-        if {_name} doesn't match ".*\.sk$":
+        add {_name} to {_list::*}
+    set tab completions for position 1 to {_list::*}
+
+on tab complete of "/saveskript":
+    loop "%new File("plugins/Skript/scripts/").listFiles()%" split at ",":
+        set {_name} to loop-value
+        regex replace "[\[\]]" with "" in {_name}
+        replace all "plugins\Skript\scripts\" with "" in {_name}
+        regex replace "^ *" with "" in {_name}
+        if any:
+            {_name} matches "^[-].*"
+            {_name} doesn't match ".*\.sk$"
+        then:
             continue
         add {_name} to {_list::*}
     set tab completions for position 1 to {_list::*}
@@ -47,11 +61,28 @@ on tab complete of "/getskript":
 command saveskript <string>:
     permission: op
     trigger:
-        set {_s} to "%page 1 of book player's tool%"
-        loop amount of pages of player's tool times:
-            set {_s} to "%{_s}%%page (loop-value + 1) of player's tool%"
+        set {_bookmeta} to player's tool.getItem().getItemMeta()
+        set {_s} to "%{_bookmeta}.getPage(1)%"
+        loop {_bookmeta}.getPageCount() times:
+            set {_s} to "%{_s}%%{_bookmeta}.getPage(loop-value + 1)%"
             replace all "<none>" with "" in {_s}
         set {_file} to new File("plugins/Skript/scripts/%arg-1%")
+        if all:
+            {_file}.exists() is true
+            {-confirm::%uuid of player%::%arg-1%} isn't set
+        then:
+            set {-confirm::%uuid of player%::%arg-1%} to true
+            send "&cWarning! This will override %arg-1%, if you are sure about this do /saveskript %arg-1% again."
+            wait 5 seconds
+            if {-confirm::%uuid of player%::%arg-1%} is set:
+                send "&c%arg-1% hasn't been overridden"
+                clear {-confirm::%uuid of player%::%arg-1%}
+            stop
+        if {-confirm::%uuid of player%::%arg-1%} is set:
+            send "&aFile has been changed and reloaded!" to player
+            clear {-confirm::%player%::%arg-1%}
+        else:
+            send "&aNew File named %arg-1% has been created and reloaded"
         set {_writer} to new PrintWriter({_file})
         {_writer}.write({_s})
         {_writer}.close()
