@@ -17,7 +17,7 @@ on place of spawner:
         add amount of loop-value to {_amount}
         set loop-value to air
     wait 2 ticks
-    execute console command "spawner set stack_size %{_amount} + 1% %world of event-block% %floor(x coord of event-block)% %floor(y coord of event-block)% %floor(z coord of event-block)%"
+    execute console command "spawner set stack_size %{_amount}% %world of event-block% %floor(x coord of event-block)% %floor(y coord of event-block)% %floor(z coord of event-block)%"
     
     
 on right click on spawner with priority lowest:
