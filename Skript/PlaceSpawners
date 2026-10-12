@@ -13,21 +13,24 @@ import:
 
 
 on place of spawner:
-    loop items of player's inventory where [persistent data tag "smartspawner:spawner_config_name" of input is persistent data tag "smartspawner:spawner_config_name" of event-item]:
+    
+    loop items of player's inventory where [string data tag "smartspawner:spawner_config_name" of input is string data tag "smartspawner:spawner_config_name" of event-item]:
         add amount of loop-value to {_amount}
         set loop-value to air
     wait 2 ticks
+    set string data tag "spawner_type" of event-block to string data tag "smartspawner:spawner_config_name" of event-item
     execute console command "spawner set stack_size %{_amount}% %world of event-block% %floor(x coord of event-block)% %floor(y coord of event-block)% %floor(z coord of event-block)%"
     
     
 on right click on spawner with priority lowest:
     player's tool is a spawner
+    
     set {_api} to SmartSpawnerProvider.getAPI()
     set {_spawner} to {_api}.getSpawnerByLocation(location of targeted block)
-
+    string data tag "smartspawner:spawner_config_name" of player's tool is string data tag "spawner_type" of event-block
     set {_amt} to {_spawner}.getStackSize()
 
-    loop items of player's inventory where [persistent data tag "smartspawner:spawner_config_name" of input is persistent data tag "smartspawner:spawner_config_name" of event-item]:
+    loop items of player's inventory where [string data tag "smartspawner:spawner_config_name" of input is string data tag "smartspawner:spawner_config_name" of event-item]:
         add amount of loop-value to {_amount}
         
         if {_amount} + {_amt} > 10000:
@@ -40,3 +43,4 @@ on right click on spawner with priority lowest:
     
     execute console command "spawner set stack_size %{_amt} + {_amount}% %world of targeted block% %floor(x coord of targeted block)% %floor(y coord of targeted block)% %floor(z coord of targeted block)%"
     cancel event
+
