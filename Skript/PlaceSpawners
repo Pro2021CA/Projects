@@ -1,0 +1,42 @@
+#
+#  A skript that automatically places all spawners from a player's inventory
+#  Addons used: skript-reflect
+#  Dependencies: SmartSpawner
+#
+
+
+import:
+    github.nighter.smartspawner.api.SmartSpawnerProvider
+
+
+
+
+
+on place of spawner:
+    loop items of player's inventory where [persistent data tag "smartspawner:spawner_config_name" of input is persistent data tag "smartspawner:spawner_config_name" of event-item]:
+        add amount of loop-value to {_amount}
+        set loop-value to air
+    wait 2 ticks
+    execute console command "spawner set stack_size %{_amount} + 1% %world of event-block% %floor(x coord of event-block)% %floor(y coord of event-block)% %floor(z coord of event-block)%"
+    
+    
+on right click on spawner with priority lowest:
+    player's tool is a spawner
+    set {_api} to SmartSpawnerProvider.getAPI()
+    set {_spawner} to {_api}.getSpawnerByLocation(location of targeted block)
+
+    set {_amt} to {_spawner}.getStackSize()
+
+    loop items of player's inventory where [persistent data tag "smartspawner:spawner_config_name" of input is persistent data tag "smartspawner:spawner_config_name" of event-item]:
+        add amount of loop-value to {_amount}
+        
+        if {_amount} + {_amt} > 10000:
+            set {_left} to {_amount} - 10000
+            set {_amount} to 10000 - {_amt}
+            set amount of loop-value to {_over}
+            continue
+        set loop-value to air
+    
+    
+    execute console command "spawner set stack_size %{_amt} + {_amount}% %world of targeted block% %floor(x coord of targeted block)% %floor(y coord of targeted block)% %floor(z coord of targeted block)%"
+    cancel event
